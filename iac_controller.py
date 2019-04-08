@@ -10,7 +10,7 @@ class IACController:
         self._iac_cache = deque()
         self._max_total_iacs = max_total_iacs
         self._total_iacs_fetched = 0
-        self._iac_url = f'{os.getenv("IAC_PROTOCOL")}://{os.getenv("IAC_HOST")}:{os.getenv("IAC_PORT")}'
+        self._iac_url = os.getenv('IAC_URL')
         self._iac_auth = HTTPBasicAuth(os.getenv('IAC_USERNAME'), os.getenv('IAC_PASSWORD'))
         self._batch_size = batch_size
 
