@@ -40,58 +40,14 @@ services:
       - RABBITMQ_HOST=${RABBIT_HOST}
       - RABBITMQ_PORT=${RABBIT_PORT}
       - REDIS_HOST=${REDIS_HOST}
-      - CASE_SVC_CONNECTION_CONFIG_HOST=${CASE_HOST}
-      - CASE_SVC_CONNECTION_CONFIG_PORT=${CASE_PORT}
       - JAVA_OPTS=-Xmx128m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${IAC_DEBUG_PORT}
       - LIQUIBASE_USER=${POSTGRES_USERNAME}
       - LIQUIBASE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - SPRING_ZIPKIN_ENABLED=true
-      - SPRING_ZIPKIN_BASEURL=http://${ZIPKIN_HOST}:${ZIPKIN_PORT}/
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8121/info"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-
-  case:
-    container_name: casesvc
-    image: eu.gcr.io/census-rm-ci/rm/census-rm-casesvc
-    ports:
-      - "${CASE_PORT}:8171"
-      - "${CASE_DEBUG_PORT}:5171"
-      - "${CASE_MAN_PORT}:8271"
-    external_links:
-      - postgres
-      - rabbitmq
-      - redis
-    environment:
-      - SECURITY_BASIC_ENABLED=true
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_HOST}?sslmode=disable
-      - LIQUIBASE_URL=jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_HOST}
-      - RABBITMQ_HOST=${RABBIT_HOST}
-      - RABBITMQ_PORT=${RABBIT_PORT}
-      - REDIS_HOST=${REDIS_HOST}
-      - DATA_GRID_ADDRESS=${REDIS_HOST}:${REDIS_PORT}
-      - ACTION_SVC_CONNECTION_CONFIG_HOST=${ACTION_HOST}
-      - ACTION_SVC_CONNECTION_CONFIG_PORT=${ACTION_PORT}
-      - INTERNET_ACCESS_CODE_SVC_CONNECTION_CONFIG_HOST=${IAC_HOST}
-      - INTERNET_ACCESS_CODE_SVC_CONNECTION_CONFIG_PORT=${IAC_PORT}
-      - COLLECTION_EXERCISE_SVC_CONNECTION_CONFIG_HOST=${COLLEX_HOST}
-      - COLLECTION_EXERCISE_SVC_CONNECTION_CONFIG_PORT=${COLLEX_PORT}
-      - CASE_DISTRIBUTION_DELAY_MILLI_SECONDS=30000
-      - JAVA_OPTS=-Xmx128m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${CASE_DEBUG_PORT}
-      - LIQUIBASE_USER=${POSTGRES_USERNAME}
-      - LIQUIBASE_PASSWORD=${POSTGRES_PASSWORD}
-      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - SPRING_ZIPKIN_ENABLED=true
-      - SPRING_ZIPKIN_BASEURL=http://${ZIPKIN_HOST}:${ZIPKIN_PORT}/
-    restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8171/info"]
       interval: 1m30s
       timeout: 10s
       retries: 3

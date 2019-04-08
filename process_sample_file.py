@@ -5,53 +5,54 @@ from itertools import tee
 from typing import Iterable
 
 from iac_controller import IACController
+from progress import print_sample_units_progress
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Load a sample file into response management.')
-    parser.add_argument('sample_file_path', help='path to the sample file', type=str)
-    parser.add_argument('output_file_path', help='path to write the print file', type=str)
-    return parser.parse_args()
-
-
-def load_sample_file(sample_file_path, output_file_path):
+def process_sample_file_from_path(sample_file_path, output_file_path):
     with open(sample_file_path) as sample_file:
-        load_sample(sample_file, output_file_path)
+        sample_file, sample_file_line_counter = tee(sample_file)
+        sample_size = sum(1 for _ in sample_file_line_counter) - 1
+        process_sample_file_rows(sample_file, sample_size, output_file_path)
 
 
-def load_sample(sample_file: Iterable[str], output_file_path):
-    sample_file_reader = csv.DictReader(sample_file, delimiter=',')
-    fieldnames = sample_file_reader.fieldnames
-    sample_file_reader, copy_sample_file_reader = tee(sample_file_reader)
-    sample_size = sum(1 for _ in copy_sample_file_reader)
+def process_sample_file_rows(sample_file: Iterable[str], sample_size, output_file_path):
     print(f'Preparing to process {sample_size} sample units')
 
-    _process_sample_file(sample_file_reader, output_file_path, sample_size, fieldnames)
-
-
-def _process_sample_file(sample_file_reader, output_file_path, sample_size, fieldnames):
+    sample_file_reader = csv.DictReader(sample_file, delimiter=',')
     iac_controller = IACController(max_total_iacs=sample_size)
-    fieldnames.extend(['UAC', 'CASE_REF', 'QID'])
+    fieldnames = sample_file_reader.fieldnames + ['CASE_REF', 'UAC', 'QID']
+
     with open(output_file_path, 'w') as output_file:
         writer = csv.DictWriter(output_file, fieldnames=fieldnames, delimiter=',')
         writer.writeheader()
         for count, sample_row in enumerate(sample_file_reader):
-            row = sample_row
-            row.update({
-                'UAC': iac_controller.get_iac(),
-                'CASE_REF': str(count).zfill(12),
-                'QID': uuid.uuid4()
-            })
-            writer.writerow(row)
+            processed_row = process_sample_row(count, iac_controller, sample_row)
+            writer.writerow(processed_row)
+            print_sample_units_progress(number_processed=count + 1, total=sample_size)
 
-            if count % (sample_size // 10) == 0:
-                print(f'Processed {count} sample units')
-    print('Finished')
+    print(f'All {sample_size} processed sample units written to {output_file_path}')
+
+
+def process_sample_row(count: int, iac_controller: IACController, sample_row: dict):
+    processed_row = sample_row.copy()
+    processed_row.update({
+        'CASE_REF': str(count).zfill(12),
+        'UAC': iac_controller.get_iac(),
+        'QID': uuid.uuid4()
+    })
+    return processed_row
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Process sample file to make it ready for print file generation')
+    parser.add_argument('sample_file_path', help='path to the sample file', type=str)
+    parser.add_argument('output_file_path', help='path to write the processed file to', type=str)
+    return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
-    load_sample_file(args.sample_file_path, args.output_file_path)
+    process_sample_file_from_path(args.sample_file_path, args.output_file_path)
 
 
 if __name__ == "__main__":
