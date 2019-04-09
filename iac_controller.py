@@ -7,10 +7,10 @@ from requests.auth import HTTPBasicAuth
 
 
 class IACController:
-    _iac_url = os.getenv('IAC_URL')
-    _iac_auth = HTTPBasicAuth(os.getenv('IAC_USERNAME'), os.getenv('IAC_PASSWORD'))
 
     def __init__(self, max_total_iacs: int, batch_size: int = 1000):
+        self._iac_url = os.getenv('IAC_URL')
+        self._iac_auth = HTTPBasicAuth(os.getenv('IAC_USERNAME'), os.getenv('IAC_PASSWORD'))
         self._iac_pool = deque()
         self._max_total_iacs = max_total_iacs
         self._batch_size = batch_size

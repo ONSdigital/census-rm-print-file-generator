@@ -35,3 +35,9 @@ pipenv run python generate_print_files.py <path_to_processed_sample_file.csv> <p
 ```
 
 This should write 2 files, one of England treatment codes and one for Wales codes with file names in the format `<PRODUCTPACK_CODE>_<ISO8601-datetime>.csv`
+
+### Tests
+Run the unit tests with pytest
+```bash
+pipenv run pytest
+```
