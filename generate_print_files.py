@@ -28,9 +28,11 @@ def generate_print_files(sample_file: Iterable[str], sample_size: int, output_fi
     with ExitStack() as stack:
         print_files = {
             productpack_code: stack.enter_context(
-                open(os.path.join(output_file_location, f'{productpack_code}_{datetime.utcnow().strftime("%Y-%M-%dT%H-%M-%S")}.csv'), 'w'))
+                open(os.path.join(output_file_location,
+                                  f'{productpack_code}_{datetime.utcnow().strftime("%Y-%M-%dT%H-%M-%S")}.csv'), 'w'))
             for productpack_code in productpack_codes}
-        field_names = ('uac', 'caseref', 'address_line1', 'address_line2', 'address_line3', 'town_name', 'postcode', 'productpack_code')
+        field_names = ('uac', 'caseref', 'address_line1', 'address_line2', 'address_line3', 'town_name', 'postcode',
+                       'productpack_code')
         csv_writers = {productpack_code: csv.DictWriter(print_file, fieldnames=field_names, delimiter='|')
                        for productpack_code, print_file in print_files.items()}
 

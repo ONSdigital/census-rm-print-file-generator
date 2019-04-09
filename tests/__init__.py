@@ -13,21 +13,21 @@ class IACConfigTestCase(unittest.TestCase):
         os.environ['IAC_PASSWORD'] = 'test_password'
 
 
-class CleanupOutputsTestCase(unittest.TestCase):
-    test_output_dir = Path(__file__).parent.resolve().joinpath('tmp_test_outputs')
-    test_resources_dir = Path(__file__).parent.resolve().joinpath('resources')
+class CleanupFilesTestCase(unittest.TestCase):
+    test_output_directory = Path(__file__).parent.resolve().joinpath('tmp_test_files')
+    test_resources_directory = Path(__file__).parent.resolve().joinpath('resources')
 
-    def clear_test_output_directory(self) -> None:
-        if self.test_output_dir.exists():
-            for file in self.test_output_dir.iterdir():
-                file.unlink()
-            self.test_output_dir.rmdir()
+    def tear_down_test_output_directory(self) -> None:
+        if self.test_output_directory.exists():
+            for _file in self.test_output_directory.iterdir():
+                _file.unlink()
+            self.test_output_directory.rmdir()
 
     def setUp(self) -> None:
         super().setUp()
-        self.clear_test_output_directory()
-        self.test_output_dir.mkdir()
+        self.tear_down_test_output_directory()
+        self.test_output_directory.mkdir()
 
     def tearDown(self) -> None:
         super().tearDown()
-        self.clear_test_output_directory()
+        self.tear_down_test_output_directory()

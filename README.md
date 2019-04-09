@@ -41,3 +41,8 @@ Run the unit tests with pytest
 ```bash
 pipenv run pytest
 ```
+
+Lint with flake8
+```bash
+pipenv run flake8
+```

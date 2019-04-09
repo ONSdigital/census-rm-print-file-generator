@@ -3,15 +3,15 @@ import csv
 import responses
 
 from process_sample_file import process_sample_file_from_path
-from tests import CleanupOutputsTestCase, IACConfigTestCase
+from tests import CleanupFilesTestCase, IACConfigTestCase
 
 
-class TestProcessSampleFile(IACConfigTestCase, CleanupOutputsTestCase):
+class TestProcessSampleFile(IACConfigTestCase, CleanupFilesTestCase):
     iac_batch = ['testiaccode1', 'testiaccode2', 'testiaccode3', 'testiaccode4', 'testiaccode5']
 
     def test_process_sample_file_from_path(self):
-        sample_file_path = self.test_resources_dir.joinpath('sample_5.csv')
-        processed_file_path = self.test_output_dir.joinpath('test_process_sample_file_from_path.csv')
+        sample_file_path = self.test_resources_directory.joinpath('sample_5.csv')
+        processed_file_path = self.test_output_directory.joinpath('test_process_sample_file_from_path.csv')
         with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
             rsps.add(responses.POST, f'{self.test_iac_url}/iacs', json=self.iac_batch)
             process_sample_file_from_path(sample_file_path,

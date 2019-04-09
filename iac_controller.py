@@ -22,7 +22,8 @@ class IACController:
         return self._iac_pool.pop()
 
     def _add_iac_batch_to_pool(self):
-        count = self._batch_size if self._batch_size < self._max_total_iacs - self._total_iacs_fetched else self._max_total_iacs - self._total_iacs_fetched
+        count = self._batch_size if self._batch_size < self._max_total_iacs - self._total_iacs_fetched\
+            else self._max_total_iacs - self._total_iacs_fetched
         iacs = self._generate_iacs(count)
         self._iac_pool.extend(iacs)
         self._total_iacs_fetched += len(iacs)
