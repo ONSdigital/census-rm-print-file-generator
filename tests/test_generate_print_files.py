@@ -7,9 +7,14 @@ from tests import CleanupFilesTestCase
 class TestGeneratePrintFile(CleanupFilesTestCase):
 
     def test_generate_print_files_from_sample_file_path(self):
+
+        # Given
         processed_sample_file_path = self.test_resources_directory.joinpath('processed_sample_5.csv')
+
+        # When
         generate_print_files_from_sample_file_path(processed_sample_file_path, self.test_output_directory)
 
+        # Then
         icl1_print_file_path = next(self.test_output_directory.glob('P_IC_ICL1_*.csv'))
         icl2_print_file_path = next(self.test_output_directory.glob('P_IC_ICL2_*.csv'))
 

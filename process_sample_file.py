@@ -1,11 +1,11 @@
 import argparse
 import csv
+import sys
 import uuid
 from itertools import tee
 from typing import Iterable
 
 from iac_controller import IACController
-from progress import print_sample_units_progress
 
 
 def process_sample_file_from_path(sample_file_path, output_file_path):
@@ -28,9 +28,11 @@ def process_sample_file_rows(sample_file: Iterable[str], sample_size, output_fil
         for count, sample_row in enumerate(sample_file_reader):
             processed_row = process_sample_row(count, iac_controller, sample_row)
             writer.writerow(processed_row)
-            print_sample_units_progress(number_processed=count + 1, total=sample_size)
+            if count % 1000:
+                sys.stdout.write(f'\rProcessed {count} sample units')
+                sys.stdout.flush()
 
-    print(f'All {sample_size} processed sample units written to {output_file_path}')
+    print(f'\nAll {sample_size} processed sample units written to {output_file_path}')
 
 
 def process_sample_row(count: int, iac_controller: IACController, sample_row: dict):

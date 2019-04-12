@@ -1,14 +1,13 @@
 import argparse
 import csv
 import os
+import sys
 from contextlib import ExitStack
 from datetime import datetime
 from itertools import tee
 from typing import Iterable
 
-from progress import print_sample_units_progress
-
-TREATMENT_CODE_TO_PRODUCTPACK_CODE = {
+TREATMENT_COUNTRY_TO_PRODUCTPACK_CODE = {
     'E': 'P_IC_ICL1',
     'W': 'P_IC_ICL2'
 }
@@ -24,7 +23,7 @@ def generate_print_files_from_sample_file_path(sample_file_path: str, output_fil
 def generate_print_files(sample_file: Iterable[str], sample_size: int, output_file_location: str):
     print(f'Preparing to generate print files for {sample_size} sample units')
     sample_file_reader = csv.DictReader(sample_file, delimiter=',')
-    productpack_codes = TREATMENT_CODE_TO_PRODUCTPACK_CODE.values()
+    productpack_codes = TREATMENT_COUNTRY_TO_PRODUCTPACK_CODE.values()
     with ExitStack() as stack:
         print_files = {
             productpack_code: stack.enter_context(
@@ -39,9 +38,11 @@ def generate_print_files(sample_file: Iterable[str], sample_size: int, output_fi
         for count, sample_row in enumerate(sample_file_reader):
             productpack_code = get_productpack_code_for_treatment_code(sample_row['TREATMENT_CODE'])
             csv_writers[productpack_code].writerow(create_print_file_row(productpack_code, sample_row))
-            print_sample_units_progress(number_processed=count + 1, total=sample_size)
+            if count % 1000:
+                sys.stdout.write(f'\rProcessed {count} sample units')
+                sys.stdout.flush()
 
-    print(f'Finished writing {len(print_files)} print file(s): {[file.name for file in print_files.values()]}')
+    print(f'\nFinished writing {len(print_files)} print file(s): {[file.name for file in print_files.values()]}')
 
 
 def create_print_file_row(productpack_code: str, sample_row: dict) -> dict:
@@ -56,7 +57,7 @@ def create_print_file_row(productpack_code: str, sample_row: dict) -> dict:
 
 
 def get_productpack_code_for_treatment_code(treatment_code: str) -> str:
-    return TREATMENT_CODE_TO_PRODUCTPACK_CODE.get(treatment_code[-1])
+    return TREATMENT_COUNTRY_TO_PRODUCTPACK_CODE.get(treatment_code[-1])
 
 
 def parse_arguments():
