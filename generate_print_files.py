@@ -30,30 +30,25 @@ def generate_print_files(sample_file: Iterable[str], sample_size: int, output_fi
                 open(os.path.join(output_file_location,
                                   f'{productpack_code}_{datetime.utcnow().strftime("%Y-%M-%dT%H-%M-%S")}.csv'), 'w'))
             for productpack_code in productpack_codes}
-        field_names = ('uac', 'caseref', 'address_line1', 'address_line2', 'address_line3', 'town_name', 'postcode',
-                       'productpack_code')
-        csv_writers = {productpack_code: csv.DictWriter(print_file, fieldnames=field_names, delimiter='|')
+        fieldnames = ('UAC', 'CASE_REF', 'ADDRESS_LINE1', 'ADDRESS_LINE2', 'ADDRESS_LINE3', 'TOWN_NAME', 'POSTCODE',
+                      'PRODUCTPACK_CODE')
+        csv_writers = {productpack_code: csv.DictWriter(print_file, fieldnames=fieldnames, delimiter='|')
                        for productpack_code, print_file in print_files.items()}
 
         for count, sample_row in enumerate(sample_file_reader):
             productpack_code = get_productpack_code_for_treatment_code(sample_row['TREATMENT_CODE'])
-            csv_writers[productpack_code].writerow(create_print_file_row(productpack_code, sample_row))
-            if count % 1000:
+            csv_writers[productpack_code].writerow(create_print_file_row(productpack_code, sample_row, fieldnames))
+            if not count % 1000:
                 sys.stdout.write(f'\rProcessed {count} sample units')
                 sys.stdout.flush()
 
     print(f'\nFinished writing {len(print_files)} print file(s): {[file.name for file in print_files.values()]}')
 
 
-def create_print_file_row(productpack_code: str, sample_row: dict) -> dict:
-    return {'uac': sample_row['UAC'],
-            'caseref': sample_row['CASE_REF'],
-            'address_line1': sample_row['ADDRESS_LINE1'],
-            'address_line2': sample_row['ADDRESS_LINE2'],
-            'address_line3': sample_row['ADDRESS_LINE3'],
-            'town_name': sample_row['TOWN_NAME'],
-            'postcode': sample_row['POSTCODE'],
-            'productpack_code': productpack_code}
+def create_print_file_row(productpack_code: str, sample_row: dict, fieldnames: Iterable[str]) -> dict:
+    print_file_row = {field: sample_row.get(field) for field in fieldnames}
+    print_file_row['PRODUCTPACK_CODE'] = productpack_code
+    return print_file_row
 
 
 def get_productpack_code_for_treatment_code(treatment_code: str) -> str:

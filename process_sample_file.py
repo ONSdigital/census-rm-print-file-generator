@@ -28,7 +28,7 @@ def process_sample_file_rows(sample_file: Iterable[str], sample_size, output_fil
         for count, sample_row in enumerate(sample_file_reader):
             processed_row = process_sample_row(count, iac_controller, sample_row)
             writer.writerow(processed_row)
-            if count % 1000:
+            if not count % 1000:
                 sys.stdout.write(f'\rProcessed {count} sample units')
                 sys.stdout.flush()
 
