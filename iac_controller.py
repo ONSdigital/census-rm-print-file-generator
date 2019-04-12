@@ -1,6 +1,7 @@
 import os
-from collections import deque
-from typing import Collection
+from multiprocessing.pool import ThreadPool
+from queue import Queue
+from typing import Collection, List, Optional
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -11,22 +12,16 @@ class IACController:
     def __init__(self, max_total_iacs: int, batch_size: int = 1000):
         self._iac_url = os.getenv('IAC_URL')
         self._iac_auth = HTTPBasicAuth(os.getenv('IAC_USERNAME'), os.getenv('IAC_PASSWORD'))
-        self._iac_pool = deque()
+        self._iac_pool = Queue()
         self._max_total_iacs = max_total_iacs
         self._batch_size = batch_size
-        self._total_iacs_fetched = 0
 
     def get_iac(self) -> str:
-        if not self._iac_pool:
-            self._add_iac_batch_to_pool()
-        return self._iac_pool.pop()
+        return self._iac_pool.get(timeout=30)
 
-    def _add_iac_batch_to_pool(self):
-        count = self._batch_size if self._batch_size < self._max_total_iacs - self._total_iacs_fetched\
-            else self._max_total_iacs - self._total_iacs_fetched
-        iacs = self._generate_iacs(count)
-        self._iac_pool.extend(iacs)
-        self._total_iacs_fetched += len(iacs)
+    def _add_iac_batch_to_pool(self, batch_size):
+        iacs = self._generate_iacs(batch_size)
+        [self._iac_pool.put(iac) for iac in iacs]
 
     def _generate_iacs(self, count: int) -> Collection[str]:
         response = requests.post(f'{self._iac_url}/iacs',
@@ -34,3 +29,20 @@ class IACController:
                                  auth=self._iac_auth)
         response.raise_for_status()
         return response.json()
+
+    def start_fetching_iacs(self):
+        batch_sizes = self._get_batch_sizes()
+        ThreadPool(4).map_async(self._add_iac_batch_to_pool, batch_sizes,
+                                error_callback=__class__._add_iac_batch_to_pool_error_callback)
+
+    def _get_batch_sizes(self) -> List[int]:
+        batches_sizes = [self._batch_size] * (self._max_total_iacs // self._batch_size)
+        remainder_batch_size = self._max_total_iacs % self._batch_size
+        if remainder_batch_size:
+            batches_sizes += [remainder_batch_size]
+        return batches_sizes
+
+    @staticmethod
+    def _add_iac_batch_to_pool_error_callback(e: Optional[BaseException]) -> None:
+        # TODO requeue the batch?
+        raise e

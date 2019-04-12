@@ -13,6 +13,7 @@ class TestIACController(IACConfigTestCase):
         with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
             rsps.add(responses.POST, f'{self.test_iac_url}/iacs', json=iac_batch)
             iac_controller = IACController(max_total_iacs=1, batch_size=1)
+            iac_controller.start_fetching_iacs()
 
             # When
             iac = iac_controller.get_iac()
@@ -28,6 +29,7 @@ class TestIACController(IACConfigTestCase):
         with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
             rsps.add(responses.POST, f'{self.test_iac_url}/iacs', json=iac_batch_1)
             iac_controller = IACController(max_total_iacs=3, batch_size=2)
+            iac_controller.start_fetching_iacs()
 
             # When
             first_iac = iac_controller.get_iac()

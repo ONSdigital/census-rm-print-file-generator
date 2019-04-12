@@ -20,6 +20,7 @@ def process_sample_file_rows(sample_file: Iterable[str], sample_size, output_fil
 
     sample_file_reader = csv.DictReader(sample_file, delimiter=',')
     iac_controller = IACController(max_total_iacs=sample_size)
+    iac_controller.start_fetching_iacs()
     fieldnames = sample_file_reader.fieldnames + ['CASE_REF', 'UAC', 'QID']
 
     with open(output_file_path, 'w') as output_file:
