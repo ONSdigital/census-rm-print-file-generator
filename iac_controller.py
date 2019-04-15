@@ -19,9 +19,10 @@ class IACController:
     def get_iac(self) -> str:
         return self._iac_pool.get(timeout=30)
 
-    def _add_iac_batch_to_pool(self, batch_size):
+    def _add_iac_batch_to_pool(self, batch_size: int):
         iacs = self._generate_iacs(batch_size)
-        [self._iac_pool.put(iac) for iac in iacs]
+        for iac in iacs:
+            self._iac_pool.put(iac)
 
     def _generate_iacs(self, count: int) -> Collection[str]:
         response = requests.post(f'{self._iac_url}/iacs',
@@ -33,7 +34,7 @@ class IACController:
     def start_fetching_iacs(self):
         batch_sizes = self._get_batch_sizes()
         ThreadPool(4).map_async(self._add_iac_batch_to_pool, batch_sizes,
-                                error_callback=__class__._add_iac_batch_to_pool_error_callback)
+                                error_callback=__class__._raise_exception)
 
     def _get_batch_sizes(self) -> List[int]:
         batches_sizes = [self._batch_size] * (self._max_total_iacs // self._batch_size)
@@ -43,6 +44,6 @@ class IACController:
         return batches_sizes
 
     @staticmethod
-    def _add_iac_batch_to_pool_error_callback(e: Optional[BaseException]) -> None:
-        # TODO requeue the batch?
-        raise e
+    def _raise_exception(e: Optional[BaseException]):
+        if e is not None:
+            raise e
