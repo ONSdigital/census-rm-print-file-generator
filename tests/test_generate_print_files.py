@@ -48,3 +48,10 @@ class TestGeneratePrintFile(CleanupFilesTestCase):
                     assert processed_sample_row[key] == value, (f'expected: [{processed_sample_row[key]}] '
                                                                 f'but found [{value}] '
                                                                 f'for field: [{key}] in file [{print_file_path}]')
+
+    def test_generate_print_files_from_sample_file_path_generates_manifests(self):
+        processed_sample_file_path = self.test_resources_directory.joinpath('processed_sample_5.csv')
+        generate_print_files_from_sample_file_path(processed_sample_file_path, self.test_output_directory)
+
+        icl1_manifest_file_path = next(self.test_output_directory.glob('P_IC_ICL1_*.manifest'))
+        icl2_manifest_file_path = next(self.test_output_directory.glob('P_IC_ICL2_*.manifest'))

@@ -45,6 +45,7 @@ services:
       - LIQUIBASE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      -
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8121/info"]
