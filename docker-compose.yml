@@ -1,0 +1,53 @@
+version: '3'
+services:
+  ons-postgres:
+    container_name: postgres
+    image: sdcplatform/ras-rm-docker-postgres
+    command: ["-c", "shared_buffers=256MB", "-c", "max_connections=200"]
+    ports:
+      - "${EX_POSTGRES_PORT}:5432"
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.6.10-management
+    ports:
+      - "5369:4369"
+      - "45672:25672"
+      - "${EX_RABBIT_PORT}:5671-5672"
+      - "16671-16672:15671-15672"
+
+  redis:
+    container_name: redis
+    image: redis:3.2.9
+    ports:
+      - "${EX_REDIS_PORT}:6379"
+
+  iac:
+    container_name: iac
+    image: eu.gcr.io/census-rm-ci/rm/census-rm-iacsvc
+    ports:
+      - "${IAC_PORT}:8121"
+      - "${IAC_DEBUG_PORT}:5121"
+      - "${IAC_MAN_PORT}:8221"
+    external_links:
+      - postgres
+      - rabbitmq
+      - redis
+    environment:
+      - SECURITY_BASIC_ENABLED=true
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_HOST}?sslmode=disable
+      - LIQUIBASE_URL=jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_HOST}
+      - RABBITMQ_HOST=${RABBIT_HOST}
+      - RABBITMQ_PORT=${RABBIT_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - JAVA_OPTS=-Xmx128m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${IAC_DEBUG_PORT}
+      - LIQUIBASE_USER=${POSTGRES_USERNAME}
+      - LIQUIBASE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8121/info"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
