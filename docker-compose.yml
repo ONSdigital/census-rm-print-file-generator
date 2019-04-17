@@ -40,7 +40,7 @@ services:
       - RABBITMQ_HOST=${RABBIT_HOST}
       - RABBITMQ_PORT=${RABBIT_PORT}
       - REDIS_HOST=${REDIS_HOST}
-      - JAVA_OPTS=-Xmx128m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${IAC_DEBUG_PORT}
+      - JAVA_OPTS=-Xmx128m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${IAC_DEBUG_PORT} -Dspring.profiles.active=dev
       - LIQUIBASE_USER=${POSTGRES_USERNAME}
       - LIQUIBASE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USERNAME}
