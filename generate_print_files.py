@@ -14,6 +14,9 @@ TREATMENT_COUNTRY_TO_PRODUCTPACK_CODE = {
     'W': 'P_IC_ICL2'
 }
 
+ICL_TEMPLATE = ('UAC', 'CASE_REF', 'ADDRESS_LINE1', 'ADDRESS_LINE2', 'ADDRESS_LINE3', 'TOWN_NAME', 'POSTCODE',
+                'PRODUCTPACK_CODE')
+
 PRODUCTPACK_CODE_TO_DESCRIPTION = {
     'P_IC_ICL1': 'Initial contact letter households - England',
     'P_IC_ICL2': 'Initial contact letter households - Wales'
@@ -35,26 +38,24 @@ def generate_print_files_from_sample_file_path(sample_file_path: Path, output_fi
 def generate_print_files(sample_file: Iterable[str], sample_size: int, output_file_location: Path):
     print(f'Preparing to generate print files for {sample_size} sample units')
     sample_file_reader = csv.DictReader(sample_file, delimiter=',')
-    productpack_codes = TREATMENT_COUNTRY_TO_PRODUCTPACK_CODE.values()
+    print_file_paths = {productpack_code: output_file_location.joinpath(
+        f'{productpack_code}_{datetime.utcnow().strftime("%Y-%M-%dT%H-%M-%S")}.csv')
+        for productpack_code in TREATMENT_COUNTRY_TO_PRODUCTPACK_CODE.values()}
+
     with ExitStack() as stack:
-        print_files = {
-            productpack_code: stack.enter_context(
-                open(output_file_location.joinpath(
-                    f'{productpack_code}_{datetime.utcnow().strftime("%Y-%M-%dT%H-%M-%S")}').with_suffix('.csv'), 'w'))
-            for productpack_code in productpack_codes}
-        fieldnames = ('UAC', 'CASE_REF', 'ADDRESS_LINE1', 'ADDRESS_LINE2', 'ADDRESS_LINE3', 'TOWN_NAME', 'POSTCODE',
-                      'PRODUCTPACK_CODE')
-        csv_writers = {productpack_code: csv.DictWriter(print_file, fieldnames=fieldnames, delimiter='|')
+        print_files = {productpack_code: stack.enter_context(open(print_file_path, 'w'))
+                       for productpack_code, print_file_path in print_file_paths.items()}
+        csv_writers = {productpack_code: csv.DictWriter(print_file, fieldnames=ICL_TEMPLATE, delimiter='|')
                        for productpack_code, print_file in print_files.items()}
 
         for count, sample_row in enumerate(sample_file_reader):
             productpack_code = get_productpack_code_for_treatment_code(sample_row['TREATMENT_CODE'])
-            csv_writers[productpack_code].writerow(create_print_file_row(productpack_code, sample_row, fieldnames))
-            if not count % 1000:
-                sys.stdout.write(f'\rProcessed {count} sample units')
+            csv_writers[productpack_code].writerow(create_print_file_row(productpack_code, sample_row, ICL_TEMPLATE))
+            if not (count + 1) % 1000:
+                sys.stdout.write(f'\rProcessed {count + 1} sample units')
                 sys.stdout.flush()
 
-    print(f'\nFinished writing {len(print_files)} print file(s): {[file.name for file in print_files.values()]}')
+    print(f'\nFinished writing {len(print_files)} print file(s): {[file.name for file in print_file_paths.values()]}')
     print('Generating manifest files')
     generate_manifest_files(
         {productpack_code: Path(print_file.name) for productpack_code, print_file in print_files.items()},

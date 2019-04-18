@@ -22,15 +22,19 @@ class IACController:
         return self._iac_pool.pop()
 
     def _add_iac_batch_to_pool(self):
-        count = self._batch_size if self._batch_size < self._max_total_iacs - self._total_iacs_fetched\
-            else self._max_total_iacs - self._total_iacs_fetched
-        iacs = self._generate_iacs(count)
+        batch_size = self._get_batch_size_without_going_over_total()
+        iacs = self._generate_iacs(batch_size)
         self._iac_pool.extend(iacs)
         self._total_iacs_fetched += len(iacs)
 
-    def _generate_iacs(self, count: int) -> Collection[str]:
+    def _generate_iacs(self, batch_size: int) -> Collection[str]:
         response = requests.post(f'{self._iac_url}/iacs',
-                                 json={'count': str(count), 'createdBy': 'SCRIPT'},
+                                 json={'count': str(batch_size), 'createdBy': 'SCRIPT'},
                                  auth=self._iac_auth)
         response.raise_for_status()
         return response.json()
+
+    def _get_batch_size_without_going_over_total(self):
+        if self._batch_size < self._max_total_iacs - self._total_iacs_fetched:
+            return self._batch_size
+        return self._max_total_iacs - self._total_iacs_fetched
